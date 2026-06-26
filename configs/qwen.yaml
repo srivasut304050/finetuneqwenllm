@@ -1,0 +1,49 @@
+# Model Configuration
+model:
+  base_model_id: "Qwen/Qwen2.5-1.5B-Instruct" # Good, efficient baseline for training on free Google Colab T4 GPU
+  device_map: "auto"
+  trust_remote_code: true
+
+# Quantization Configuration (QLoRA)
+quantization:
+  load_in_4bit: true
+  bnb_4bit_quant_type: "nf4"
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_compute_dtype: "bfloat16" # "bfloat16" or "float16" depending on GPU support
+
+# LoRA Configuration
+lora:
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  bias: "none"
+  task_type: "CAUSAL_LM"
+
+# Training Configuration
+training:
+  output_dir: "./outputs"
+  overwrite_output_dir: true
+  num_train_epochs: 3
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 4
+  learning_rate: 2.0e-4
+  weight_decay: 0.01
+  optim: "paged_adamw_8bit" # Efficient optimizer for low-memory GPUs
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.03
+  logging_steps: 10
+  save_strategy: "steps"
+  save_steps: 50
+  evaluation_strategy: "steps"
+  eval_steps: 50
+  fp16: true # True for T4 GPUs, set bf16: true on newer Ampere+ GPUs
+  bf16: false
+  max_seq_length: 1024

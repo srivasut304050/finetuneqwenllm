@@ -1,0 +1,23 @@
+# Core deep learning framework
+torch>=2.2.0
+
+# Hugging Face foundation ecosystems
+transformers>=4.40.0
+datasets>=2.18.0
+accelerate>=0.29.0
+
+# Parameter-Efficient Fine-Tuning and Supervised Fine-Tuning
+peft>=0.10.0
+trl>=0.8.0
+
+# Quantization engine
+bitsandbytes>=0.43.0
+
+# Serializers & Utilities
+sentencepiece
+protobuf
+pyyaml
+ipykernel
+pandas
+matplotlib
+scikit-learn

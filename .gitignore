@@ -1,0 +1,32 @@
+# Python environments
+.venv/
+venv/
+env/
+ENV/
+pyvenv.cfg
+.ipynb_checkpoints/
+
+# Project caches & data
+data/raw/*
+data/processed/*
+data/cache/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/cache/.gitkeep
+
+# Model weights, outputs and checkpoints
+outputs/
+adapters/*
+!adapters/.gitkeep
+merged/
+*.bin
+*.pt
+*.pth
+*.safetensors
+*.gguf
+
+# Logging & OS files
+.DS_Store
+Thumbs.db
+*.log
+.vscode/

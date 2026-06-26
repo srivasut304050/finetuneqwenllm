@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Fine-Tuning Roadmap & Interactive Architecture Guide</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #131b2e;
+      --bg-card: rgba(30, 41, 59, 0.4);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(99, 102, 241, 0.15);
+      
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      --accent-blue: #38bdf8;
+      --accent-indigo: #6366f1;
+      --accent-purple: #a855f7;
+      --accent-green: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-rose: #f43f5e;
+      
+      --gradient-primary: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      --gradient-blue: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+      --gradient-green: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+      
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'Fira Code', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.08) 0px, transparent 50%);
+      background-attachment: fixed;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 4rem;
+      position: relative;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      color: var(--accent-blue);
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1.5rem;
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header p {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    /* Section Headings */
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+    }
+
+    .section-title i {
+      color: var(--accent-indigo);
+    }
+
+    /* Glass Card */
+    .glass-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2rem;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px -15px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      margin-bottom: 2.5rem;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(99, 102, 241, 0.25);
+      box-shadow: 0 15px 35px -10px rgba(99, 102, 241, 0.1);
+    }
+
+    /* Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    @media (min-width: 768px) {
+      .grid-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    @media (min-width: 992px) {
+      .grid-3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    /* BOX DIAGRAMS - Custom CSS */
+    .diagram-container {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem 1rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+    }
+
+    /* Workflow Diagram (VS Code <-> Git <-> Colab) */
+    .flow-diagram {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      min-width: 600px;
+      padding: 1rem 0;
+    }
+
+    @media (min-width: 768px) {
+      .flow-diagram {
+        flex-direction: row;
+        justify-content: space-between;
+      }
+    }
+
+    .flow-node {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1.25rem;
+      width: 100%;
+      max-width: 220px;
+      text-align: center;
+      position: relative;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .flow-node:hover {
+      transform: translateY(-4px);
+    }
+
+    .flow-node.vscode {
+      border-color: rgba(56, 189, 248, 0.4);
+      background: rgba(14, 165, 233, 0.05);
+    }
+    .flow-node.vscode i { color: var(--accent-blue); }
+
+    .flow-node.github {
+      border-color: rgba(168, 85, 247, 0.4);
+      background: rgba(168, 85, 247, 0.05);
+    }
+    .flow-node.github i { color: var(--accent-purple); }
+
+    .flow-node.colab {
+      border-color: rgba(251, 191, 36, 0.4);
+      background: rgba(251, 191, 36, 0.05);
+    }
+    .flow-node.colab i { color: var(--accent-amber); }
+
+    .flow-node.huggingface {
+      border-color: rgba(52, 211, 153, 0.4);
+      background: rgba(52, 211, 153, 0.05);
+    }
+    .flow-node.huggingface i { color: var(--accent-green); }
+
+    .flow-node h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0.5rem 0 0.25rem 0;
+    }
+
+    .flow-node p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .flow-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-indigo);
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+
+    @media (max-width: 767px) {
+      .flow-arrow i {
+        transform: rotate(90deg);
+      }
+    }
+
+    .arrow-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+      font-family: var(--font-mono);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+    }
+
+    /* LoRA Box Diagram */
+    .lora-diagram {
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      gap: 1.5rem;
+      min-width: 550px;
+      padding: 1rem;
+    }
+
+    .lora-column {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .lora-box {
+      border-radius: 8px;
+      padding: 1.25rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .lora-box.base-model {
+      background: rgba(148, 163, 184, 0.05);
+      border: 2px dashed var(--text-muted);
+      width: 160px;
+      height: 180px;
+      color: var(--text-secondary);
+    }
+
+    .lora-box.base-model .lock-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+      color: var(--accent-rose);
+    }
+
+    .lora-box.adapter-a {
+      background: rgba(99, 102, 241, 0.1);
+      border: 2px solid var(--accent-indigo);
+      width: 140px;
+      height: 80px;
+      margin-bottom: 1rem;
+    }
+
+    .lora-box.adapter-b {
+      background: rgba(168, 85, 247, 0.1);
+      border: 2px solid var(--accent-purple);
+      width: 140px;
+      height: 80px;
+    }
+
+    .lora-math-sign {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      padding: 0 0.5rem;
+    }
+
+    .lora-box h5 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .lora-box p {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
+
+    /* Key Information Lists */
+    .info-list {
+      list-style: none;
+    }
+
+    .info-list li {
+      position: relative;
+      padding-left: 1.75rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+
+    .info-list li::before {
+      content: "\f00c";
+      font-family: "Font Awesome 5 Free";
+      font-weight: 900;
+      position: absolute;
+      left: 0;
+      top: 0.15rem;
+      color: var(--accent-green);
+      font-size: 0.85rem;
+    }
+
+    /* Interactive Pipeline Navigation */
+    .pipeline-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .tab-btn {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text-primary);
+    }
+
+    .tab-btn.active {
+      background: var(--gradient-primary);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.4s ease forwards;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Code Blocks */
+    .code-wrapper {
+      background: #080c14;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 1.5rem 0;
+    }
+
+    .code-header {
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .code-lang {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .code-copy {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+
+    .code-copy:hover {
+      color: var(--text-primary);
+    }
+
+    pre {
+      padding: 1.25rem;
+      overflow-x: auto;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: #e2e8f0;
+    }
+
+    /* Highlight syntax coloring */
+    .c-comment { color: #64748b; }
+    .c-keyword { color: #f472b6; }
+    .c-string { color: #34d399; }
+    .c-func { color: #60a5fa; }
+    .c-class { color: #fb7185; }
+    .c-number { color: #fbbf24; }
+
+    /* Playbook Steps */
+    .playbook-step {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    .playbook-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 1.25rem;
+      top: 2.75rem;
+      bottom: -1rem;
+      width: 2px;
+      background: var(--border-color);
+    }
+
+    .step-number {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.1);
+      border: 2px solid var(--accent-indigo);
+      color: var(--accent-blue);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-details h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .step-details h3 span {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .step-details p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Info Alerts */
+    .alert-box {
+      border-left: 4px solid var(--accent-indigo);
+      background: rgba(99, 102, 241, 0.03);
+      padding: 1rem 1.25rem;
+      border-radius: 0 8px 8px 0;
+      margin: 1.5rem 0;
+    }
+    
+    .alert-box.important {
+      border-left-color: var(--accent-amber);
+      background: rgba(251, 191, 36, 0.03);
+    }
+
+    .alert-box h5 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .alert-box p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* Terminology cards */
+    .term-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .term-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1.25rem;
+      transition: all 0.2s ease;
+    }
+
+    .term-card:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .term-card h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--accent-blue);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .term-card p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      margin-top: 5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    footer i {
+      color: var(--accent-rose);
+      margin: 0 0.25rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Header -->
+    <header>
+      <div class="badge">
+        <i class="fa-solid fa-graduation-cap"></i> Complete Roadmap
+      </div>
+      <h1>LLM Fine-Tuning Guide</h1>
+      <p>A beautiful, interactive reference guide highlighting every core concept, architectural stage, and operational step required to fine-tune Large Language Models using VS Code and Google Colab.</p>
+    </header>
+
+    <!-- Section: Development Workflow -->
+    <section class="glass-card">
+      <h2 class="section-title"><i class="fa-solid fa-network-wired"></i> Hybrid Development Architecture</h2>
+      <p>To maximize efficiency, we separate the <strong>code development environment</strong> from the <strong>compute environment</strong>. We write and manage our code inside VS Code, push it to GitHub, and load it into Google Colab solely to leverage its high-performance GPUs.</p>
+      
+      <div class="diagram-container">
+        <div class="flow-diagram">
+          <!-- VS Code Node -->
+          <div class="flow-node vscode">
+            <i class="fa-solid fa-code fa-2x"></i>
+            <h4>Local VS Code</h4>
+            <p>Write configs, scripts, explorer notebooks, & manage files.</p>
+          </div>
+          
+          <div class="flow-arrow">
+            <i class="fa-solid fa-arrow-right"></i>
+            <span class="arrow-label">git push</span>
+          </div>
+
+          <!-- GitHub Node -->
+          <div class="flow-node github">
+            <i class="fa-brands fa-github fa-2x"></i>
+            <h4>GitHub Repo</h4>
+            <p>Version control and bridge between local & GPU environment.</p>
+          </div>
+
+          <div class="flow-arrow">
+            <i class="fa-solid fa-arrow-right"></i>
+            <span class="arrow-label">git clone</span>
+          </div>
+
+          <!-- Google Colab Node -->
+          <div class="flow-node colab">
+            <i class="fa-solid fa-server fa-2x"></i>
+            <h4>Google Colab</h4>
+            <p>Train Qwen on powerful NVIDIA A100/T4 GPU runtime.</p>
+          </div>
+
+          <div class="flow-arrow">
+            <i class="fa-solid fa-arrow-right"></i>
+            <span class="arrow-label">save adapter</span>
+          </div>
+
+          <!-- Hugging Face Node -->
+          <div class="flow-node huggingface">
+            <i class="fa-solid fa-face-smile fa-2x"></i>
+            <h4>Hugging Face</h4>
+            <p>Store trained adapter weights and share model checkpoints.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert-box">
+        <h5><i class="fa-solid fa-circle-info"></i> Why this setup is professional:</h5>
+        <p>Instead of editing monolithic Colab notebooks directly (which lacks code auto-complete, debugging, and linting), we treat our fine-tuning codebase as a production-grade software package. This allows collaborative development, clear version history, and rapid deployment.</p>
+      </div>
+    </section>
+
+    <!-- Section: Step-by-Step Training Breakdown -->
+    <section class="glass-card">
+      <h2 class="section-title"><i class="fa-solid fa-sliders"></i> Fine-Tuning Pipeline & Concept Maps</h2>
+      <p>Fine-tuning requires an integrated pipeline spanning dataset preprocessing, model loading optimizations, training execution, and evaluation. Click on the tabs below to explore each phase.</p>
+
+      <!-- Tabs Navigation -->
+      <div class="pipeline-tabs">
+        <button class="tab-btn active" onclick="openTab(event, 'step-env')">1. Setup</button>
+        <button class="tab-btn" onclick="openTab(event, 'step-dataset')">2. Dataset</button>
+        <button class="tab-btn" onclick="openTab(event, 'step-token')">3. Tokenization</button>
+        <button class="tab-btn" onclick="openTab(event, 'step-quant')">4. Quantization</button>
+        <button class="tab-btn" onclick="openTab(event, 'step-lora')">5. PEFT / LoRA</button>
+        <button class="tab-btn" onclick="openTab(event, 'step-train')">6. Training</button>
+        <button class="tab-btn" onclick="openTab(event, 'step-eval')">7. Eval & Merge</button>
+      </div>
+
+      <!-- Tab 1: Environment Setup -->
+      <div id="step-env" class="tab-content active">
+        <h3>1. Environment Setup</h3>
+        <p>Before launching training, we must install the baseline deep learning stack. Below is the essential configuration file outlining the key libraries and their responsibilities.</p>
+
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">requirements.txt</span>
+            <button class="code-copy" onclick="copyCode(this)"><i class="fa-regular fa-copy"></i> Copy</button>
+          </div>
+          <pre><code><span class="c-comment"># Core deep learning framework</span>
+torch>=2.2.0
+
+<span class="c-comment"># Hugging Face foundation ecosystems</span>
+transformers>=4.40.0
+datasets>=2.18.0
+accelerate>=0.29.0
+
+<span class="c-comment"># Parameter-Efficient Fine-Tuning and Supervised Fine-Tuning</span>
+peft>=0.10.0
+trl>=0.8.0
+
+<span class="c-comment"># Quantization engine for running large models on smaller GPUs</span>
+bitsandbytes>=0.43.0
+
+<span class="c-comment"># Serializers & Utilities</span>
+sentencepiece
+protobuf
+pyyaml</code></pre>
+        </div>
+
+        <div class="term-grid">
+          <div class="term-card">
+            <h4>PEFT <span style="font-size: 0.75rem; color: var(--text-muted);">Library</span></h4>
+            <p>Parameter-Efficient Fine-Tuning. Enables freezing the base model and training only 1-2% of extra weights, dramatically reducing GPU memory usage.</p>
+          </div>
+          <div class="term-card">
+            <h4>TRL <span style="font-size: 0.75rem; color: var(--text-muted);">Library</span></h4>
+            <p>Transformer Reinforcement Learning. Provides high-level trainer classes such as <code>SFTTrainer</code> for streamlined fine-tuning workflows.</p>
+          </div>
+          <div class="term-card">
+            <h4>Accelerate <span style="font-size: 0.75rem; color: var(--text-muted);">Library</span></h4>
+            <p>Handles the raw hardware allocation (multi-GPU, mixed precision FP16/BF16) behind the scenes without rewriting PyTorch loops.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Dataset Preparation -->
+      <div id="step-dataset" class="tab-content">
+        <h3>2. Dataset Exploration & Structuring</h3>
+        <p>To train models to follow instructions or behave as chat agents, we must format our unstructured data into standard representation structures. The modern standard is the <strong>ChatML Format</strong>.</p>
+        
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">dataset_format.json</span>
+            <button class="code-copy" onclick="copyCode(this)"><i class="fa-regular fa-copy"></i> Copy</button>
+          </div>
+          <pre><code>[
+  {
+    <span class="c-keyword">"messages"</span>: [
+      {<span class="c-keyword">"role"</span>: <span class="c-string">"system"</span>, <span class="c-keyword">"content"</span>: <span class="c-string">"You are a helpful assistant specialized in writing code."</span>},
+      {<span class="c-keyword">"role"</span>: <span class="c-string">"user"</span>, <span class="c-keyword">"content"</span>: <span class="c-string">"Write a Python function to check for primes."</span>},
+      {<span class="c-keyword">"role"</span>: <span class="c-string">"assistant"</span>, <span class="c-keyword">"content"</span>: <span class="c-string">"def is_prime(n):\n    if n <= 1: return False\n..."</span>}
+    ]
+  }
+]</code></pre>
+        </div>
+
+        <div class="alert-box">
+          <h5><i class="fa-solid fa-lightbulb"></i> Crucial Preprocessing Steps:</h5>
+          <ul class="info-list">
+            <li>Ensure conversational turns are clean and structured.</li>
+            <li>Apply system prompts uniformly so the model maintains its persona.</li>
+            <li>Remove duplicates and truncate overly long documents to keep memory footprint bounded.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Tab 3: Tokenization -->
+      <div id="step-token" class="tab-content">
+        <h3>3. Tokenization & Attention Masks</h3>
+        <p>Text cannot be read directly by neural networks. Tokenizers convert characters into integers (Token IDs), pad lists of numbers to ensure equal sizes, and construct masks to ignore filler padding.</p>
+
+        <div class="diagram-container">
+          <!-- Text to Tokens Visual Box Flow -->
+          <div style="display: flex; flex-direction: column; gap: 1rem; align-items: center; justify-content: center; min-width: 500px;">
+            <div style="display: flex; gap: 1rem; align-items: center;">
+              <div style="background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent-blue); padding: 0.5rem 1rem; border-radius: 6px;">
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Raw Text Input</span>
+                <p style="font-weight: 600;">"Fine-tuning Qwen"</p>
+              </div>
+              <i class="fa-solid fa-arrow-right" style="color: var(--accent-indigo);"></i>
+              <div style="background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-purple); padding: 0.5rem 1rem; border-radius: 6px; text-align: center;">
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Qwen Tokenizer</span>
+                <p style="font-family: var(--font-mono); font-size: 0.85rem;">[BPE Vocab Lookup]</p>
+              </div>
+              <i class="fa-solid fa-arrow-right" style="color: var(--accent-indigo);"></i>
+              <div style="background: rgba(52, 211, 153, 0.1); border: 1px solid var(--accent-green); padding: 0.5rem 1rem; border-radius: 6px;">
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Token IDs (Input IDs)</span>
+                <p style="font-family: var(--font-mono); font-weight: 600;">[2784, 18223, 851, 937]</p>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 1.5rem; margin-top: 1rem; border-top: 1px dashed var(--border-color); padding-top: 1rem; width: 100%; justify-content: center;">
+              <div style="font-size: 0.8rem;">
+                <strong style="color: var(--accent-amber);">Padding:</strong> Extends short lists with specific pad tokens (e.g. <code>[PAD]</code>) to create uniform tensor shapes.
+              </div>
+              <div style="font-size: 0.8rem;">
+                <strong style="color: var(--accent-blue);">Attention Mask:</strong> Set to <code>1</code> for actual tokens and <code>0</code> for padding, preventing the model from attending to padding.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Quantization -->
+      <div id="step-quant" class="tab-content">
+        <h3>4. Model Loading & Quantization (QLoRA)</h3>
+        <p>Quantization compresses model weights from high precision (like FP32 or FP16) to lower precision (typically 4-bit) to conserve huge amounts of VRAM. <strong>QLoRA (Quantized LoRA)</strong> uses this compressed model as a frozen base.</p>
+
+        <div class="grid-2">
+          <div>
+            <h4>VRAM Footprint Comparison</h4>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">For a 7 Billion parameter model (like Qwen2.5-7B):</p>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 2px;">
+                  <span>16-bit Full Precision</span>
+                  <span style="color: var(--accent-rose); font-weight: bold;">~16 GB VRAM</span>
+                </div>
+                <div style="width: 100%; height: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 5px; overflow: hidden;">
+                  <div style="width: 100%; height: 100%; background: var(--accent-rose);"></div>
+                </div>
+              </div>
+
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 2px;">
+                  <span>8-bit Quantized Model</span>
+                  <span style="color: var(--accent-amber); font-weight: bold;">~8 GB VRAM</span>
+                </div>
+                <div style="width: 100%; height: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 5px; overflow: hidden;">
+                  <div style="width: 50%; height: 100%; background: var(--accent-amber);"></div>
+                </div>
+              </div>
+
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 2px;">
+                  <span>4-bit Quantized Model (QLoRA standard)</span>
+                  <span style="color: var(--accent-green); font-weight: bold;">~5.5 GB VRAM</span>
+                </div>
+                <div style="width: 100%; height: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 5px; overflow: hidden;">
+                  <div style="width: 35%; height: 100%; background: var(--accent-green);"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4>BitsAndBytes Config Example</h4>
+            <div class="code-wrapper" style="margin: 0;">
+              <div class="code-header">
+                <span class="code-lang">python</span>
+              </div>
+              <pre style="padding: 0.8rem 1.2rem;"><code>bnb_config = BitsAndBytesConfig(
+  load_in_4bit=<span class="c-keyword">True</span>,
+  bnb_4bit_quant_type=<span class="c-string">"nf4"</span>,
+  bnb_4bit_compute_dtype=torch.bfloat16,
+  bnb_4bit_use_double_quant=<span class="c-keyword">True</span>
+)</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 5: LoRA / PEFT -->
+      <div id="step-lora" class="tab-content">
+        <h3>5. PEFT / LoRA Adapter Concept</h3>
+        <p>LoRA (Low-Rank Adaptation) bypasses full weight training by injecting tiny trainable decomposition matrices in parallel to the frozen model layer parameters. Only these matrices are updated.</p>
+
+        <div class="diagram-container">
+          <div class="lora-diagram">
+            
+            <div class="lora-column" style="justify-content: center; font-size: 0.9rem; font-family: var(--font-mono); color: var(--accent-blue);">
+              <span>Input Vector (X)</span>
+              <div style="width: 80px; height: 2px; background: var(--accent-blue); margin-top: 5px;"></div>
+            </div>
+
+            <div class="lora-math-sign">→</div>
+
+            <!-- Path A: Frozen Base Model -->
+            <div class="lora-column">
+              <div class="lora-box base-model">
+                <i class="fa-solid fa-lock lock-icon"></i>
+                <h5>Frozen Base Weights</h5>
+                <p>Weight Matrix W₀</p>
+                <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 10px;">d x k dimensions</p>
+              </div>
+            </div>
+
+            <div class="lora-math-sign" style="font-family: var(--font-mono);">+</div>
+
+            <!-- Path B: Low Rank Adapters -->
+            <div class="lora-column">
+              <div class="lora-box adapter-a">
+                <h5>Matrix A (Down-projection)</h5>
+                <p>Shape: d x r</p>
+                <p style="font-size: 0.6rem; color: var(--text-muted);">Initialized: Random Gaussian</p>
+              </div>
+              <div class="lora-box adapter-b">
+                <h5>Matrix B (Up-projection)</h5>
+                <p>Shape: r x k</p>
+                <p style="font-size: 0.6rem; color: var(--text-muted);">Initialized: Zero (starts at 0 delta)</p>
+              </div>
+            </div>
+
+            <div class="lora-math-sign">=</div>
+
+            <div class="lora-column" style="justify-content: center; font-size: 0.9rem; font-family: var(--font-mono); color: var(--accent-green);">
+              <span>Modified Output (Y)</span>
+              <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 5px;">Y = X·W₀ + (α/r)X·AB</div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="term-grid">
+          <div class="term-card">
+            <h4>Rank (r)</h4>
+            <p>Determines the dimensionality of the adapters. Common values are 8, 16, or 32. Lower rank uses less memory, while higher rank captures more complex behavior but increases compute size.</p>
+          </div>
+          <div class="term-card">
+            <h4>Alpha (&alpha;)</h4>
+            <p>Scaling factor that acts as a learning rate multiplier for the adapter weights. Commonly configured to be double the value of the rank (e.g. if <code>r = 16</code>, then <code>lora_alpha = 32</code>).</p>
+          </div>
+          <div class="term-card">
+            <h4>Target Modules</h4>
+            <p>Specifies which linear projection modules in the base model receive adapters. For Qwen, targeting <code>q_proj</code>, <code>k_proj</code>, <code>v_proj</code>, and <code>o_proj</code> yields the best results.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 6: Training -->
+      <div id="step-train" class="tab-content">
+        <h3>6. Training Execution (Supervised Fine-Tuning)</h3>
+        <p>Using Hugging Face TRL, we run SFT (Supervised Fine-Tuning). SFT adjusts model probabilities to output tokens that match our training data target responses closely.</p>
+
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">python</span>
+          </div>
+          <pre><code><span class="c-keyword">from</span> trl <span class="c-keyword">import</span> SFTTrainer
+<span class="c-keyword">from</span> transformers <span class="c-keyword">import</span> TrainingArguments
+
+training_args = TrainingArguments(
+  output_dir=<span class="c-string">"./outputs"</span>,
+  per_device_train_batch_size=<span class="c-number">4</span>,
+  gradient_accumulation_steps=<span class="c-number">4</span>, <span class="c-comment"># Simulates larger batch sizes</span>
+  learning_rate=<span class="c-number">2e-4</span>,            <span class="c-comment"># Typical LoRA rate</span>
+  fp16=<span class="c-keyword">True</span>,                       <span class="c-comment"># Use mixed-precision</span>
+  logging_steps=<span class="c-number">10</span>,
+  max_steps=<span class="c-number">200</span>
+)
+
+trainer = SFTTrainer(
+  model=model,
+  train_dataset=dataset,
+  peft_config=lora_config,
+  dataset_text_field=<span class="c-string">"text"</span>,
+  args=training_args
+)
+trainer.train()</code></pre>
+        </div>
+      </div>
+
+      <!-- Tab 7: Merging & Export -->
+      <div id="step-eval" class="tab-content">
+        <h3>7. Evaluation, Merging & Deployment</h3>
+        <p>After training, we are left with a folder of tiny weight adjustments (the LoRA adapter, ~20MB). To deploy this model for local execution, we merge these adapters back into the multi-gigabyte base model weights.</p>
+
+        <div class="grid-2">
+          <div class="term-card">
+            <h4>1. Merge Weight Matrices</h4>
+            <p>We load the original base model alongside our trained adapter weights and perform the math: <code>W_new = W₀ + (α/r)·AB</code>. We save the resulting model as a complete, standalone LLM.</p>
+          </div>
+          <div class="term-card">
+            <h4>2. Export to GGUF format</h4>
+            <p>Using tools like <code>llama.cpp</code>, we convert the merged model into GGUF format and quantize it to 4-bit (Q4_K_M) or 8-bit. This optimizes it to run locally on CPU/GPU.</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Section: Local + Google Colab Playbook -->
+    <section class="glass-card">
+      <h2 class="section-title"><i class="fa-solid fa-book-open"></i> Local + Google Colab Sync Playbook</h2>
+      <p>Follow these steps to synchronize your local workspace inside VS Code with Google Colab's GPU runtime:</p>
+
+      <div style="margin-top: 2rem;">
+        
+        <!-- Step 1 -->
+        <div class="playbook-step">
+          <div class="step-number">1</div>
+          <div class="step-details">
+            <h3>Set up your local codebase <span>Local PC</span></h3>
+            <p>Write your project files (<code>requirements.txt</code>, <code>configs/qwen.yaml</code>, training scripts) using VS Code in your local directory.</p>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="playbook-step">
+          <div class="step-number">2</div>
+          <div class="step-details">
+            <h3>Commit and Push to GitHub <span>Git</span></h3>
+            <p>Create a GitHub repository, link it to your workspace, commit all changes, and push it online:</p>
+            <div class="code-wrapper" style="margin: 0.5rem 0;">
+              <pre><code>git init
+git add .
+git commit -m "Initialize project structure"
+git remote add origin https://github.com/yourusername/qwen-finetuning.git
+git push -u origin main</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="playbook-step">
+          <div class="step-number">3</div>
+          <div class="step-details">
+            <h3>Open Google Colab <span>Google Colab</span></h3>
+            <p>Create a new Jupyter Notebook in Google Colab and set the hardware runtime type to <strong>T4 GPU</strong> (or A100 if subscribed to Colab Pro) under <em>Runtime > Change runtime type</em>.</p>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="playbook-step">
+          <div class="step-number">4</div>
+          <div class="step-details">
+            <h3>Clone and Train in Colab <span>Google Colab</span></h3>
+            <p>Run these commands inside a Colab cell to grab your code from GitHub and start training on Colab's GPU:</p>
+            <div class="code-wrapper" style="margin: 0.5rem 0;">
+              <pre><code>!git clone https://github.com/yourusername/qwen-finetuning.git
+%cd qwen-finetuning
+!pip install -r requirements.txt
+!python src/train.py</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="playbook-step">
+          <div class="step-number">5</div>
+          <div class="step-details">
+            <h3>Push Saved Adapters to Hugging Face Hub <span>HF Hub</span></h3>
+            <p>Instead of saving the large weights directly to Git, configure your training script to push adapters to Hugging Face automatically, or download the output checkpoints directly from Colab's file storage.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <p>Developed with <i class="fa-solid fa-heart"></i> for LLM Engineers | Keep Learning, Keep Tuning</p>
+    </footer>
+
+  </div>
+
+  <!-- JavaScript to control interactive elements -->
+  <script>
+    function openTab(evt, tabName) {
+      // Hide all elements with class="tab-content"
+      const tabContents = document.getElementsByClassName("tab-content");
+      for (let i = 0; i < tabContents.length; i++) {
+        tabContents[i].classList.remove("active");
+      }
+
+      // Remove the class "active" from all tab buttons
+      const tabButtons = document.getElementsByClassName("tab-btn");
+      for (let i = 0; i < tabButtons.length; i++) {
+        tabButtons[i].classList.remove("active");
+      }
+
+      // Show the current tab and add an "active" class to the button that opened the tab
+      document.getElementById(tabName).classList.add("active");
+      evt.currentTarget.classList.add("active");
+    }
+
+    function copyCode(btn) {
+      const codeBlock = btn.parentElement.nextElementSibling.querySelector("code");
+      const text = codeBlock.textContent;
+
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-check" style="color: var(--accent-green);"></i> Copied!';
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+      });
+    }
+  </script>
+</body>
+</html>
