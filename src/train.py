@@ -87,9 +87,14 @@ def main():
     )
     
     # 6. Configure Training Arguments
+    output_dir = train_cfg.get("output_dir", "./outputs")
+    if train_cfg.get("overwrite_output_dir", True) and os.path.exists(output_dir):
+        import shutil
+        logger.info(f"Cleaning existing output directory: {output_dir}")
+        shutil.rmtree(output_dir, ignore_errors=True)
+
     training_args = TrainingArguments(
-        output_dir=train_cfg.get("output_dir", "./outputs"),
-        overwrite_output_dir=train_cfg.get("overwrite_output_dir", True),
+        output_dir=output_dir,
         num_train_epochs=train_cfg.get("num_train_epochs", 3),
         max_steps=train_cfg.get("max_steps", -1), # Allows capping training at specific steps
         per_device_train_batch_size=train_cfg.get("per_device_train_batch_size", 2),
