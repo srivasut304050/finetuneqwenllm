@@ -60,37 +60,25 @@ def main():
     )
     
     # 5. Load Dataset
-    # Using a placeholder JSON for local testing; in Google Colab this can target any HF dataset
-    dataset_name = config.get("dataset", {}).get("name", "data/raw/sample.json")
-    
-    # Create sample data if it doesn't exist to prevent crash during local testing
-    if not os.path.exists(dataset_name):
-        logger.info(f"Creating sample dummy dataset at {dataset_name} for demonstration.")
-        os.makedirs(os.path.dirname(dataset_name), exist_ok=True)
-        dummy_data = [
-            {
-                "messages": [
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": "Hello! What is your name?"},
-                    {"role": "assistant", "content": "I am a fine-tuned Qwen model ready to assist you!"}
-                ]
-            },
-            {
-                "messages": [
-                    {"role": "system", "content": "You are a coding expert."},
-                    {"role": "user", "content": "What is Python?"},
-                    {"role": "assistant", "content": "Python is a high-level, interpreted programming language known for readability."}
-                ]
-            }
-        ]
-        with open(dataset_name, 'w') as f:
-            json.dump(dummy_data, f, indent=2)
-            
+    dataset_cfg = config.get("dataset", {})
+    dataset_name = dataset_cfg.get("name", "data/raw/sample.json")
+
+    local_data_exts = (".json", ".jsonl", ".csv")
+    if dataset_name.endswith(local_data_exts) and not os.path.exists(dataset_name):
+        raise FileNotFoundError(
+            f"Local dataset file not found: {dataset_name}. "
+            "If using Hugging Face Hub, set dataset.name to a dataset ID "
+            "like 'angrygiraffe/claude-opus-4.6-4.7-reasoning-8.7k'."
+        )
+
     raw_dataset = load_raw_data(dataset_name)
     processed_dataset = preprocess_dataset(
         raw_dataset, 
         tokenizer, 
-        config.get("dataset", {}).get("max_length", 1024)
+        dataset_cfg.get("max_length", 1024),
+        text_field=dataset_cfg.get("text_field", "messages"),
+        prompt_field=dataset_cfg.get("prompt_field"),
+        response_field=dataset_cfg.get("response_field")
     )
     
     # 6. Configure Training Arguments

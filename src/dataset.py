@@ -40,18 +40,45 @@ def format_to_chatml(messages):
         formatted_text += f"<|im_start|>{role}\n{content}<|im_end|>\n"
     return formatted_text
 
-def preprocess_dataset(dataset, tokenizer, max_seq_length):
+def preprocess_dataset(
+    dataset,
+    tokenizer,
+    max_seq_length,
+    text_field="messages",
+    prompt_field=None,
+    response_field=None,
+):
     """
     Applies ChatML templates and tokenizes conversations.
     """
     def tokenize_function(examples):
-        # Handle Hugging Face standard 'messages' field
-        batch_messages = examples.get("messages", [])
-        
         texts = []
-        for conversation in batch_messages:
-            texts.append(format_to_chatml(conversation))
-            
+
+        if text_field in examples:
+            batch_values = examples[text_field]
+            for value in batch_values:
+                if isinstance(value, list):
+                    texts.append(format_to_chatml(value))
+                elif isinstance(value, str):
+                    texts.append(value)
+                else:
+                    texts.append(str(value))
+        elif prompt_field and response_field and prompt_field in examples and response_field in examples:
+            prompts = examples[prompt_field]
+            responses = examples[response_field]
+            for prompt, response in zip(prompts, responses):
+                texts.append(
+                    f"<|im_start|>user\n{prompt}<|im_end|>\n"
+                    f"<|im_start|>assistant\n{response}<|im_end|>\n"
+                )
+        else:
+            available_fields = list(examples.keys())
+            raise ValueError(
+                "Unable to build training text. Provide dataset.text_field or "
+                "dataset.prompt_field + dataset.response_field in config. "
+                f"Available fields: {available_fields}"
+            )
+
         tokenized = tokenizer(
             texts,
             truncation=True,

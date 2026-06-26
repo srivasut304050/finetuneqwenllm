@@ -27,6 +27,12 @@ lora:
   bias: "none"
   task_type: "CAUSAL_LM"
 
+# Dataset Configuration
+dataset:
+  name: "angrygiraffe/claude-opus-4.6-4.7-reasoning-8.7k"
+  text_field: "messages"
+  max_length: 1024
+
 # Training Configuration
 training:
   output_dir: "./outputs"
