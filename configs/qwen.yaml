@@ -38,6 +38,7 @@ training:
   output_dir: "./outputs"
   overwrite_output_dir: true
   num_train_epochs: 3
+  max_steps: 50 # Cap training at 50 steps for rapid validation
   per_device_train_batch_size: 2
   gradient_accumulation_steps: 4
   learning_rate: 2.0e-4

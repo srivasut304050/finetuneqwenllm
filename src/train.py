@@ -91,6 +91,7 @@ def main():
         output_dir=train_cfg.get("output_dir", "./outputs"),
         overwrite_output_dir=train_cfg.get("overwrite_output_dir", True),
         num_train_epochs=train_cfg.get("num_train_epochs", 3),
+        max_steps=train_cfg.get("max_steps", -1), # Allows capping training at specific steps
         per_device_train_batch_size=train_cfg.get("per_device_train_batch_size", 2),
         gradient_accumulation_steps=train_cfg.get("gradient_accumulation_steps", 4),
         learning_rate=float(train_cfg.get("learning_rate", 2e-4)),
