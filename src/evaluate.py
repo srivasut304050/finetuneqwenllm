@@ -1,5 +1,11 @@
+import os
+import sys
 import math
 import torch
+
+# Add project root directory to python path to resolve imports when running directly
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from torch.utils.data import DataLoader
 from transformers import DataCollatorForLanguageModeling
 from src.utils import load_config, setup_logging
