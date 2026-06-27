@@ -99,7 +99,6 @@ def main():
 
     sft_config = SFTConfig(
         output_dir=output_dir,
-        max_seq_length=train_cfg.get("max_seq_length", 1024),
         num_train_epochs=train_cfg.get("num_train_epochs", 3),
         max_steps=train_cfg.get("max_steps", -1),
         per_device_train_batch_size=train_cfg.get("per_device_train_batch_size", 2),
@@ -124,6 +123,7 @@ def main():
         train_dataset=train_dataset,
         peft_config=peft_config,
         args=sft_config,
+        max_seq_length=train_cfg.get("max_seq_length", 1024),
     )
     
     # 8. Run Training
