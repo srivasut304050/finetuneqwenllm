@@ -69,6 +69,29 @@ def main():
     # 5. Load Dataset
     dataset_name = dataset_cfg.get("name", "data/raw/sample.json")
 
+    # Generate dummy data if using the default local sample path and it's missing
+    if dataset_name == "data/raw/sample.json" and not os.path.exists(dataset_name):
+        logger.info("Creating dummy dataset sample.json for testing...")
+        os.makedirs(os.path.dirname(dataset_name), exist_ok=True)
+        dummy_data = [
+            {
+                "messages": [
+                    {"role": "system", "content": "You are a CS tutor."},
+                    {"role": "user", "content": "What is binary search?"},
+                    {"role": "assistant", "content": "Binary search is an O(log n) algorithm for finding elements in sorted lists."}
+                ]
+            },
+            {
+                "messages": [
+                    {"role": "system", "content": "You are a CS tutor."},
+                    {"role": "user", "content": "What is time complexity?"},
+                    {"role": "assistant", "content": "Time complexity represents the compute steps an algorithm takes as input size grows."}
+                ]
+            }
+        ]
+        with open(dataset_name, 'w') as f:
+            json.dump(dummy_data, f, indent=2)
+
     # If it looks like a local file path but doesn't exist, raise a clear error
     local_data_exts = (".json", ".jsonl", ".csv")
     if dataset_name.endswith(local_data_exts) and not os.path.exists(dataset_name):
@@ -97,15 +120,23 @@ def main():
         logger.info(f"Cleaning existing output directory: {output_dir}")
         shutil.rmtree(output_dir, ignore_errors=True)
 
+    # Dynamic optimizer check: bitsandbytes optimizers like paged_adamw_8bit require CUDA.
+    # If on CPU, fall back to adamw_torch.
+    optim_name = train_cfg.get("optim", "paged_adamw_8bit")
+    if not torch.cuda.is_available():
+        optim_name = "adamw_torch"
+        logger.info("CUDA not available. Falling back to 'adamw_torch' optimizer for local CPU run.")
+
     sft_config = SFTConfig(
         output_dir=output_dir,
+        max_length=train_cfg.get("max_seq_length", 1024), # Configured under max_length in SFTConfig
         num_train_epochs=train_cfg.get("num_train_epochs", 3),
         max_steps=train_cfg.get("max_steps", -1),
         per_device_train_batch_size=train_cfg.get("per_device_train_batch_size", 2),
         gradient_accumulation_steps=train_cfg.get("gradient_accumulation_steps", 4),
         learning_rate=float(train_cfg.get("learning_rate", 2e-4)),
         weight_decay=train_cfg.get("weight_decay", 0.01),
-        optim=train_cfg.get("optim", "paged_adamw_8bit"),
+        optim=optim_name,
         lr_scheduler_type=train_cfg.get("lr_scheduler_type", "cosine"),
         warmup_ratio=train_cfg.get("warmup_ratio", 0.03),
         logging_steps=train_cfg.get("logging_steps", 10),
@@ -113,6 +144,7 @@ def main():
         save_steps=train_cfg.get("save_steps", 50),
         fp16=train_cfg.get("fp16", True) if torch.cuda.is_available() else False,
         bf16=train_cfg.get("bf16", False) if torch.cuda.is_available() else False,
+        use_cpu=not torch.cuda.is_available(), # Allow running training locally on CPU
         report_to="none",
     )
     
@@ -123,7 +155,6 @@ def main():
         train_dataset=train_dataset,
         peft_config=peft_config,
         args=sft_config,
-        max_seq_length=train_cfg.get("max_seq_length", 1024),
     )
     
     # 8. Run Training
