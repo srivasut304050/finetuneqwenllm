@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from transformers import DataCollatorForLanguageModeling
 from src.utils import load_config, setup_logging
 from src.tokenizer import load_qwen_tokenizer
-from src.dataset import load_raw_data, preprocess_dataset
+from src.dataset import load_raw_data, format_dataset_to_text
 from src.inference import load_inference_model
 
 logger = setup_logging()
@@ -61,13 +61,27 @@ def main():
     # Load validation data (using same sample for demonstration)
     dataset_name = config.get("dataset", {}).get("name", "data/raw/sample.json")
     raw_dataset = load_raw_data(dataset_name)
-    processed_dataset = preprocess_dataset(
-        raw_dataset, 
-        tokenizer, 
-        config.get("dataset", {}).get("max_length", 1024)
+    formatted_dataset = format_dataset_to_text(
+        raw_dataset,
+        text_field=config.get("dataset", {}).get("text_field", "messages"),
+        prompt_field=config.get("dataset", {}).get("prompt_field"),
+        response_field=config.get("dataset", {}).get("response_field")
     )
     
-    eval_set = processed_dataset["train"] if "train" in processed_dataset else processed_dataset
+    # Tokenize evaluation dataset
+    def tokenize_function(examples):
+        return tokenizer(
+            examples["text"],
+            truncation=True,
+            max_length=config.get("dataset", {}).get("max_length", 1024)
+        )
+        
+    eval_set = formatted_dataset.map(
+        tokenize_function,
+        batched=True,
+        remove_columns=formatted_dataset.column_names,
+        desc="Tokenizing evaluation dataset"
+    )
     
     loss, perplexity = evaluate_model(model, tokenizer, eval_set)
     

@@ -13,10 +13,10 @@ logger = setup_logging()
 
 def load_inference_model(base_model_id, adapter_path=None):
     """
-    Loads base model and optionall overlays the LoRA adapter weights.
+    Loads base model and optionally overlays the LoRA adapter weights.
     """
-    logger.info(f"Loading tokenizer: {base_model_id}")
-    tokenizer = AutoTokenizer.from_pretrained(base_model_id, trust_remote_code=True)
+    from src.tokenizer import load_qwen_tokenizer
+    tokenizer = load_qwen_tokenizer(base_model_id)
     
     logger.info(f"Loading base model: {base_model_id}")
     model = AutoModelForCausalLM.from_pretrained(
@@ -33,7 +33,7 @@ def load_inference_model(base_model_id, adapter_path=None):
         logger.info("No adapter path found or provided. Running base model inference.")
         
     return model, tokenizer
-
+ 
 def generate_response(model, tokenizer, prompt, max_new_tokens=256):
     """
     Constructs ChatML format, tokenizes it, runs forward pass, and decodes.
@@ -59,8 +59,14 @@ def generate_response(model, tokenizer, prompt, max_new_tokens=256):
     input_length = inputs["input_ids"].shape[1]
     generated_tokens = outputs[0][input_length:]
     return tokenizer.decode(generated_tokens, skip_special_tokens=True)
-
+ 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Qwen Inference Runner")
+    parser.add_argument("--prompt", type=str, default=None, help="Single prompt to generate a response for")
+    parser.add_argument("--max_tokens", type=int, default=256, help="Maximum new tokens to generate")
+    args = parser.parse_args()
+
     config = load_config()
     model_cfg = config.get("model", {})
     base_model_id = model_cfg.get("base_model_id", "Qwen/Qwen2.5-1.5B-Instruct")
@@ -69,6 +75,13 @@ def main():
     logger.info("Initializing inference engine...")
     model, tokenizer = load_inference_model(base_model_id, adapter_path)
     
+    if args.prompt:
+        print(f"\nUser: {args.prompt}")
+        print("Assistant: ", end="", flush=True)
+        response = generate_response(model, tokenizer, args.prompt, max_new_tokens=args.max_tokens)
+        print(response)
+        return
+
     print("\n" + "="*50)
     print("Qwen Chat Inference (Type 'quit' to exit)")
     print("="*50)
@@ -83,7 +96,7 @@ def main():
                 continue
                 
             print("Assistant: ", end="", flush=True)
-            response = generate_response(model, tokenizer, user_input)
+            response = generate_response(model, tokenizer, user_input, max_new_tokens=args.max_tokens)
             print(response)
             
         except KeyboardInterrupt:
