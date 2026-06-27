@@ -12,6 +12,7 @@ trl>=0.8.0
 
 # Quantization engine
 bitsandbytes>=0.43.0
+torchao>=0.16.0
 
 # Serializers & Utilities
 sentencepiece
