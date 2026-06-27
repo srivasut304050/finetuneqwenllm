@@ -26,19 +26,31 @@ def main():
     
     logger.info("Initializing Fine-Tuning Pipeline...")
     
-    # 2. Setup Quantization Configuration (QLoRA)
+    # 2. Setup Quantization Configuration (QLoRA) & Precision
     bnb_config = None
-    if torch.cuda.is_available() and quant_cfg.get("load_in_4bit", False):
-        compute_dtype = getattr(torch, quant_cfg.get("bnb_4bit_compute_dtype", "float16"))
-        bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_quant_type=quant_cfg.get("bnb_4bit_quant_type", "nf4"),
-            bnb_4bit_use_double_quant=quant_cfg.get("bnb_4bit_use_double_quant", True),
-            bnb_4bit_compute_dtype=compute_dtype
-        )
-        logger.info("QLoRA 4-bit Quantization Configured")
+    use_fp16 = False
+    use_bf16 = False
+    
+    if torch.cuda.is_available():
+        if torch.cuda.is_bf16_supported():
+            compute_dtype = torch.bfloat16
+            use_bf16 = True
+            logger.info("GPU supports BF16. Training in BFloat16 precision.")
+        else:
+            compute_dtype = torch.float16
+            use_fp16 = True
+            logger.info("GPU does not support BF16. Training in Float16 precision.")
+            
+        if quant_cfg.get("load_in_4bit", False):
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type=quant_cfg.get("bnb_4bit_quant_type", "nf4"),
+                bnb_4bit_use_double_quant=quant_cfg.get("bnb_4bit_use_double_quant", True),
+                bnb_4bit_compute_dtype=compute_dtype
+            )
+            logger.info("QLoRA 4-bit Quantization Configured")
     else:
-        logger.warning("CUDA GPU not available or quantization disabled; loading model in default precision.")
+        logger.warning("CUDA GPU not available; loading model in default precision on CPU.")
         
     # 3. Load Tokenizer & Model
     model_id = model_cfg.get("base_model_id", "Qwen/Qwen2.5-1.5B-Instruct")
@@ -142,8 +154,8 @@ def main():
         logging_steps=train_cfg.get("logging_steps", 10),
         save_strategy=train_cfg.get("save_strategy", "steps"),
         save_steps=train_cfg.get("save_steps", 50),
-        fp16=train_cfg.get("fp16", True) if torch.cuda.is_available() else False,
-        bf16=train_cfg.get("bf16", False) if torch.cuda.is_available() else False,
+        fp16=use_fp16,
+        bf16=use_bf16,
         use_cpu=not torch.cuda.is_available(), # Allow running training locally on CPU
         report_to="none",
     )
