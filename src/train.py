@@ -1,16 +1,17 @@
 import os
 import sys
+import json
 import torch
 
 # Add project root directory to python path to resolve imports when running directly
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from transformers import AutoModelForCausalLM, BitsAndBytesConfig, TrainingArguments
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-from trl import SFTTrainer
+from transformers import AutoModelForCausalLM, BitsAndBytesConfig
+from peft import LoraConfig, prepare_model_for_kbit_training
+from trl import SFTTrainer, SFTConfig
 from src.utils import load_config, setup_logging
 from src.tokenizer import load_qwen_tokenizer
-from src.dataset import load_raw_data, preprocess_dataset
+from src.dataset import load_raw_data, format_dataset_to_text
 
 logger = setup_logging()
 
@@ -21,6 +22,7 @@ def main():
     quant_cfg = config.get("quantization", {})
     lora_cfg = config.get("lora", {})
     train_cfg = config.get("training", {})
+    dataset_cfg = config.get("dataset", {})
     
     logger.info("Initializing Fine-Tuning Pipeline...")
     
@@ -36,7 +38,7 @@ def main():
         )
         logger.info("QLoRA 4-bit Quantization Configured")
     else:
-        logger.warn("CUDA GPU not available or quantization disabled; loading model in default precision.")
+        logger.warning("CUDA GPU not available or quantization disabled; loading model in default precision.")
         
     # 3. Load Tokenizer & Model
     model_id = model_cfg.get("base_model_id", "Qwen/Qwen2.5-1.5B-Instruct")
@@ -65,9 +67,9 @@ def main():
     )
     
     # 5. Load Dataset
-    dataset_cfg = config.get("dataset", {})
     dataset_name = dataset_cfg.get("name", "data/raw/sample.json")
 
+    # If it looks like a local file path but doesn't exist, raise a clear error
     local_data_exts = (".json", ".jsonl", ".csv")
     if dataset_name.endswith(local_data_exts) and not os.path.exists(dataset_name):
         raise FileNotFoundError(
@@ -77,48 +79,51 @@ def main():
         )
 
     raw_dataset = load_raw_data(dataset_name)
-    processed_dataset = preprocess_dataset(
-        raw_dataset, 
-        tokenizer, 
-        dataset_cfg.get("max_length", 1024),
+
+    # Format the dataset to have a 'text' column with ChatML formatted strings
+    # SFTTrainer will handle tokenization internally
+    train_dataset = format_dataset_to_text(
+        raw_dataset,
         text_field=dataset_cfg.get("text_field", "messages"),
         prompt_field=dataset_cfg.get("prompt_field"),
         response_field=dataset_cfg.get("response_field")
     )
     
-    # 6. Configure Training Arguments
+    # 6. Configure SFT Training Arguments
+    # Using SFTConfig (extends TrainingArguments) for full TRL compatibility
     output_dir = train_cfg.get("output_dir", "./outputs")
     if train_cfg.get("overwrite_output_dir", True) and os.path.exists(output_dir):
         import shutil
         logger.info(f"Cleaning existing output directory: {output_dir}")
         shutil.rmtree(output_dir, ignore_errors=True)
 
-    training_args = TrainingArguments(
+    sft_config = SFTConfig(
         output_dir=output_dir,
+        max_seq_length=train_cfg.get("max_seq_length", 1024),
         num_train_epochs=train_cfg.get("num_train_epochs", 3),
-        max_steps=train_cfg.get("max_steps", -1), # Allows capping training at specific steps
+        max_steps=train_cfg.get("max_steps", -1),
         per_device_train_batch_size=train_cfg.get("per_device_train_batch_size", 2),
         gradient_accumulation_steps=train_cfg.get("gradient_accumulation_steps", 4),
         learning_rate=float(train_cfg.get("learning_rate", 2e-4)),
         weight_decay=train_cfg.get("weight_decay", 0.01),
         optim=train_cfg.get("optim", "paged_adamw_8bit"),
         lr_scheduler_type=train_cfg.get("lr_scheduler_type", "cosine"),
+        warmup_ratio=train_cfg.get("warmup_ratio", 0.03),
         logging_steps=train_cfg.get("logging_steps", 10),
         save_strategy=train_cfg.get("save_strategy", "steps"),
         save_steps=train_cfg.get("save_steps", 50),
         fp16=train_cfg.get("fp16", True) if torch.cuda.is_available() else False,
         bf16=train_cfg.get("bf16", False) if torch.cuda.is_available() else False,
-        report_to="none" # Disable W&B logging for simplicity unless configured
+        report_to="none",
     )
     
     # 7. SFT Trainer Initialize
     logger.info("Initializing Trainer...")
     trainer = SFTTrainer(
         model=model,
-        train_dataset=processed_dataset["train"] if "train" in processed_dataset else processed_dataset,
+        train_dataset=train_dataset,
         peft_config=peft_config,
-        dataset_text_field="input_ids", # Pre-tokenized
-        args=training_args
+        args=sft_config,
     )
     
     # 8. Run Training
@@ -128,6 +133,7 @@ def main():
     # 9. Save Trained Adapter
     adapter_path = "./adapters/qwen-lora-adapter"
     logger.info(f"Training completed. Saving adapter weights to: {adapter_path}")
+    os.makedirs(adapter_path, exist_ok=True)
     trainer.model.save_pretrained(adapter_path)
     tokenizer.save_pretrained(adapter_path)
     logger.info("Adapter saved successfully. Fine-tuning complete!")

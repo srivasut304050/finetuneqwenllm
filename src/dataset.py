@@ -40,26 +40,24 @@ def format_to_chatml(messages):
         formatted_text += f"<|im_start|>{role}\n{content}<|im_end|>\n"
     return formatted_text
 
-def preprocess_dataset(
-    dataset,
-    tokenizer,
-    max_seq_length,
-    text_field="messages",
-    prompt_field=None,
-    response_field=None,
-):
+def format_dataset_to_text(dataset, text_field="messages", prompt_field=None, response_field=None):
     """
-    Applies ChatML templates and tokenizes conversations.
+    Converts a dataset into a format with a single 'text' column containing
+    the full formatted conversation string. This is what SFTTrainer expects.
+    
+    Does NOT tokenize — SFTTrainer handles tokenization internally.
     """
-    def tokenize_function(examples):
+    def formatting_function(examples):
         texts = []
 
         if text_field in examples:
             batch_values = examples[text_field]
             for value in batch_values:
                 if isinstance(value, list):
+                    # List of message dicts -> ChatML format
                     texts.append(format_to_chatml(value))
                 elif isinstance(value, str):
+                    # Already a plain text string
                     texts.append(value)
                 else:
                     texts.append(str(value))
@@ -79,16 +77,31 @@ def preprocess_dataset(
                 f"Available fields: {available_fields}"
             )
 
-        tokenized = tokenizer(
-            texts,
-            truncation=True,
-            max_length=max_seq_length,
-            padding=False,  # Usually padded dynamically during batching by DataCollator
-        )
-        return tokenized
+        return {"text": texts}
 
-    return dataset.map(
-        tokenize_function,
+    # Get the split to operate on
+    if isinstance(dataset, Dataset):
+        ds = dataset
+    elif "train" in dataset:
+        ds = dataset["train"]
+    else:
+        # Take the first available split
+        first_key = list(dataset.keys())[0]
+        ds = dataset[first_key]
+
+    # Log available columns for debugging
+    logger.info(f"Dataset columns: {ds.column_names}")
+    logger.info(f"Dataset size: {len(ds)} rows")
+
+    # Apply formatting and keep only the 'text' column
+    formatted = ds.map(
+        formatting_function,
         batched=True,
-        remove_columns=dataset.column_names if isinstance(dataset, Dataset) else dataset["train"].column_names
+        remove_columns=ds.column_names,
+        desc="Formatting dataset to text"
     )
+    
+    logger.info(f"Formatted dataset columns: {formatted.column_names}")
+    logger.info(f"Sample text (first 200 chars): {formatted[0]['text'][:200]}...")
+    
+    return formatted
